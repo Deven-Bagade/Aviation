@@ -1,0 +1,50 @@
+{
+  "name": "uav-engine-digital-twin",
+  "version": "0.1.0",
+  "description": "Windows desktop MVP for a real-time UAV aero piston engine digital twin",
+  "main": "electron/main.js",
+  "author": "SIH Prototype",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "vite --host 127.0.0.1",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && electron .",
+    "build": "vite build",
+    "dist": "npm run build && electron-builder",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "recharts": "^3.10.1",
+    "three": "^0.179.1",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron": "^37.10.3",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.6",
+    "wait-on": "^8.0.4"
+  },
+  "build": {
+    "appId": "com.sih.uavenginedigitaltwin",
+    "productName": "UAV Engine Digital Twin",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
