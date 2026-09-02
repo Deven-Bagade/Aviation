@@ -1,0 +1,14 @@
+{
+  "features": [
+    { "key": "rpm", "min": 0, "max": 4000 },
+    { "key": "cht", "min": 50, "max": 260 },
+    { "key": "egt", "min": 300, "max": 950 },
+    { "key": "oilPressure", "min": 0, "max": 7 },
+    { "key": "oilTemperature", "min": 30, "max": 150 },
+    { "key": "fuelFlow", "min": 0, "max": 40 },
+    { "key": "vibration", "min": 0, "max": 8 },
+    { "key": "batteryVoltage", "min": 18, "max": 32 },
+    { "key": "alternatorCurrent", "min": -20, "max": 60 },
+    { "key": "throttle", "min": 0, "max": 1 }
+  ]
+}

@@ -971,3 +971,15 @@ footer {
   align-items: center;
   gap: 8px;
 }
+
+.ai-panel { display: flex; flex-direction: column; gap: 12px; }
+.ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ai-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px; }
+.ai-card-title { font-size: 11.5px; color: #9fb0bd; margin-bottom: 6px; }
+.ai-metric { font-size: 20px; font-weight: 700; }
+.ai-metric small { font-size: 11px; color: #9fb0bd; font-weight: 400; }
+.ai-trends { display: flex; flex-direction: column; gap: 4px; }
+.ai-trend-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.trend-arrow.rising { color: #ff8a00; }
+.trend-arrow.falling { color: #4fc3ff; }
+.ai-explanation { font-size: 12.5px; color: #cfe3ee; background: rgba(79,195,255,0.06); border: 1px solid rgba(79,195,255,0.2); border-radius: 8px; padding: 8px 10px; }

@@ -16,6 +16,19 @@ import {
 
 import { EngineMode, FaultType, Health, ManualField, Telemetry } from "./types";
 
+import AIInsightPanel from "./components/AI/AIInsightPanel";
+import {
+  loadAIModels,
+  runAnomalyDetection,
+  runFaultClassification,
+  runFaultAttribution,
+  runRulEstimation
+} from "./ai/models";
+import { analyzeTrends } from "./ai/trend";
+import { explainAnomaly, explainFault } from "./ai/explain";
+import { buildRecommendation } from "./ai/maintenance";
+import { AIInsight } from "./ai/types";
+
 const MAX_HISTORY = 180;
 
 type Tab = "DASHBOARD" | "SIMULATION";
@@ -40,6 +53,17 @@ export default function App() {
   const [health, setHealth] = useState<Health>(() => calculateHealth(createInitialTelemetry()));
   const [degradation, setDegradation] = useState(() => createInitialDegradationState());
   const [throttleCommand, setThrottleCommand] = useState(0.62);
+  const aiReadyRef = useRef(false);
+
+  const [aiInsight, setAiInsight] = useState<AIInsight>({
+  modelsLoaded: false,
+  anomaly: null,
+  faultPrediction: null,
+  trends: [],
+  rul: null,
+  explanation: null,
+  recommendation: null
+});
 
   /* ===================== TELEMETRY ENGINE SUBSCRIPTION ===================== */
 
@@ -65,6 +89,38 @@ export default function App() {
       unsubConnection();
     };
   }, []);
+
+  useEffect(() => {
+  loadAIModels().then((ok) => {
+    aiReadyRef.current = ok;
+    setAiInsight((prev) => ({ ...prev, modelsLoaded: ok }));
+  });
+}, []);
+
+useEffect(() => {
+  if (!aiReadyRef.current || !telemetry.timestamp) return;
+
+  const anomaly = runAnomalyDetection(telemetry);
+  const faultPrediction = runFaultClassification(telemetry);
+  const attribution = runFaultAttribution(telemetry);
+  const trends = analyzeTrends(history);
+  const rul = runRulEstimation(telemetry, degradation);
+
+  setAiInsight({
+    modelsLoaded: true,
+    anomaly,
+    faultPrediction,
+    trends,
+    rul,
+    explanation:
+      faultPrediction && faultPrediction.label !== "NONE"
+        ? explainFault(faultPrediction, attribution)
+        : anomaly
+        ? explainAnomaly(anomaly)
+        : null,
+    recommendation: buildRecommendation(anomaly, faultPrediction, rul, trends)
+  });
+}, [telemetry, history, degradation]);
 
   /* ===================== COMMANDS ===================== */
 
@@ -306,6 +362,10 @@ export default function App() {
               ))}
             </div>
           </section>
+
+          <section className="ai-section">
+  <AIInsightPanel insight={aiInsight} />
+</section>
 
           <section className="lower-grid">
             <div className="panel">

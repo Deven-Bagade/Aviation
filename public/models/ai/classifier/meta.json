@@ -1,0 +1,1 @@
+{"labels":["NONE","HIGH_TEMP","LOW_OIL","HIGH_VIBRATION","ELECTRICAL","FUEL_SYSTEM","ABNORMAL_RPM","COOLING_FAULT","INJECTOR_FAULT","SENSOR_FAULT"],"features":["rpm","cht","egt","oilPressure","oilTemperature","fuelFlow","vibration","batteryVoltage","alternatorCurrent","throttle"]}
