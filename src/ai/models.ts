@@ -4,6 +4,8 @@ import { buildFeatureVector, FEATURE_KEYS } from "./features";
 import { AnomalyResult, FaultPrediction, RulEstimate } from "./types";
 import { DegradationState, Telemetry } from "../types";
 
+// src/ai/models.ts
+
 const MODEL_BASE = "/models/ai";
 
 let anomalyModel: tf.LayersModel | null = null;
@@ -13,33 +15,36 @@ let rulModel: tf.LayersModel | null = null;
 let rulMeta: { scale: number } | null = null;
 
 let loaded = false;
-let loadAttempted = false;
+let loadPromise: Promise<boolean> | null = null;
 
-export async function loadAIModels(): Promise<boolean> {
-  if (loadAttempted) return loaded;
-  loadAttempted = true;
+export function loadAIModels(): Promise<boolean> {
+  if (loadPromise) return loadPromise;
 
-  try {
-    const [ae, aeMeta, clf, rul, rulM] = await Promise.all([
-      tf.loadLayersModel(`${MODEL_BASE}/anomaly/model.json`),
-      fetch(`${MODEL_BASE}/anomaly/meta.json`).then((r) => r.json()),
-      tf.loadLayersModel(`${MODEL_BASE}/classifier/model.json`),
-      tf.loadLayersModel(`${MODEL_BASE}/rul/model.json`),
-      fetch(`${MODEL_BASE}/rul/meta.json`).then((r) => r.json())
-    ]);
+  loadPromise = (async () => {
+    try {
+      const [ae, aeMeta, clf, rul, rulM] = await Promise.all([
+        tf.loadLayersModel(`${MODEL_BASE}/anomaly/model.json`),
+        fetch(`${MODEL_BASE}/anomaly/meta.json`).then((r) => r.json()),
+        tf.loadLayersModel(`${MODEL_BASE}/classifier/model.json`),
+        tf.loadLayersModel(`${MODEL_BASE}/rul/model.json`),
+        fetch(`${MODEL_BASE}/rul/meta.json`).then((r) => r.json())
+      ]);
 
-    anomalyModel = ae;
-    anomalyMeta = aeMeta;
-    classifierModel = clf;
-    rulModel = rul;
-    rulMeta = rulM;
-    loaded = true;
-    return true;
-  } catch (err) {
-    console.warn("AI models not available, falling back to rule-based analytics:", err);
-    loaded = false;
-    return false;
-  }
+      anomalyModel = ae;
+      anomalyMeta = aeMeta;
+      classifierModel = clf;
+      rulModel = rul;
+      rulMeta = rulM;
+      loaded = true;
+      return true;
+    } catch (err) {
+      console.warn("AI models not available, falling back to rule-based analytics:", err);
+      loaded = false;
+      return false;
+    }
+  })();
+
+  return loadPromise;
 }
 
 export function runAnomalyDetection(t: Telemetry): AnomalyResult | null {
