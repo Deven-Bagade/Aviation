@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Telemetry, DegradationState } from "../types";
-import { AIInsight } from "./types";
+import { AIInsight, RulEstimate, FaultPrediction } from "./types";
+
+import { loadRulXgbModel, runRulEstimationXgb } from "./rulXgb";
+import { loadClassifierXgbModel, runFaultClassificationXgb } from "./classifierXgb";
 
 import {
   loadAIModels,
@@ -23,21 +26,7 @@ import {
 /*
  * ============================================================
  * useAIInsight
- *
- * This hook is the missing piece connecting the AI pipeline
- * (ai/models.ts, ai/trend.ts, ai/explain.ts, ai/maintenance.ts)
- * to the rest of the app. None of those modules were previously
- * invoked anywhere, so AIInsightPanel had no data source.
- *
- * Responsibilities:
- * 1. Load the TF.js models once (falls back gracefully to
- *    rule-based/trend-only analytics if they aren't present).
- * 2. Advance a local DegradationState in lockstep with telemetry
- *    so the RUL model has the "hours run" context it needs.
- * 3. Recompute anomaly detection, fault classification/
- *    attribution, trend analysis, RUL estimation, an
- *    explanation, and a maintenance recommendation whenever new
- *    telemetry arrives.
+ * ...
  * ========================================================== */
 
 export function useAIInsight(
@@ -45,6 +34,13 @@ export function useAIInsight(
   history: Telemetry[]
 ): AIInsight {
   const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [rulXgbLoaded, setRulXgbLoaded] = useState(false);
+  const [xgbRul, setXgbRul] = useState<RulEstimate | null>(null);
+
+  // XGBoost fault classifier (ONNX) — same async-load, prefer-once-ready
+  // pattern used above for the XGBoost RUL model.
+  const [classifierXgbLoaded, setClassifierXgbLoaded] = useState(false);
+  const [xgbFault, setXgbFault] = useState<FaultPrediction | null>(null);
 
   const degradationRef = useRef<DegradationState>(
     createInitialDegradationState()
@@ -56,9 +52,15 @@ export function useAIInsight(
     let cancelled = false;
 
     loadAIModels().then((ok) => {
-      if (!cancelled) {
-        setModelsLoaded(ok);
-      }
+      if (!cancelled) setModelsLoaded(ok);
+    });
+
+    loadRulXgbModel().then((ok) => {
+      if (!cancelled) setRulXgbLoaded(ok);
+    });
+
+    loadClassifierXgbModel().then((ok) => {
+      if (!cancelled) setClassifierXgbLoaded(ok);
     });
 
     return () => {
@@ -81,25 +83,80 @@ export function useAIInsight(
     );
   }, [telemetry]);
 
+  // The XGBoost/ONNX RUL model runs async (onnxruntime-web's session.run
+  // returns a Promise), so its result can't be computed inside the useMemo
+  // below like the TF.js models are. Run it here and stash the result in
+  // state; the memo just reads whatever's latest.
+  useEffect(() => {
+    if (!rulXgbLoaded) return;
+
+    let cancelled = false;
+
+    runRulEstimationXgb(telemetry, degradationRef.current).then((estimate) => {
+      if (!cancelled) setXgbRul(estimate);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rulXgbLoaded, telemetry]);
+
+  // Same async pattern for the XGBoost fault classifier.
+  useEffect(() => {
+    if (!classifierXgbLoaded) return;
+
+    let cancelled = false;
+
+    runFaultClassificationXgb(telemetry).then((prediction) => {
+      if (!cancelled) setXgbFault(prediction);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [classifierXgbLoaded, telemetry]);
+
   return useMemo<AIInsight>(() => {
     const trends = analyzeTrends(history);
 
     if (!modelsLoaded) {
       return {
         modelsLoaded: false,
+        aiDegraded: false,
         anomaly: null,
         faultPrediction: null,
         trends,
         rul: null,
         explanation: null,
-        recommendation: buildRecommendation(null, null, null, trends)
+        recommendation: buildRecommendation(null, null, null, trends, false)
       };
     }
 
     const anomaly = runAnomalyDetection(telemetry);
-    const faultPrediction = runFaultClassification(telemetry);
+
+    // Prefer the XGBoost classifier once it's loaded and has produced a
+    // result for this telemetry reading; fall back to the TF.js classifier
+    // otherwise (e.g. still loading, or ONNX load/inference failed).
+    const faultPrediction =
+      classifierXgbLoaded && xgbFault
+        ? xgbFault
+        : runFaultClassification(telemetry);
+
+    // Feature attribution still runs against the TF.js classifier — it's a
+    // synchronous occlusion analysis over classifierModel's own predict()
+    // calls, so it stays paired with the TF.js model regardless of which
+    // classifier's prediction is displayed.
     const attribution = runFaultAttribution(telemetry);
-    const rul = runRulEstimation(telemetry, degradationRef.current);
+
+    // Prefer the XGBoost RUL estimate once it's loaded and has produced a
+    // result for this telemetry reading; fall back to the TF.js model
+    // otherwise (e.g. still loading, or ONNX load/inference failed).
+    const rul =
+      rulXgbLoaded && xgbRul
+        ? xgbRul
+        : runRulEstimation(telemetry, degradationRef.current);
+
+    const aiDegraded = anomaly === null && faultPrediction === null;
 
     const explanation =
       faultPrediction && faultPrediction.label !== "NONE"
@@ -108,15 +165,11 @@ export function useAIInsight(
           ? explainAnomaly(anomaly)
           : null;
 
-    const recommendation = buildRecommendation(
-      anomaly,
-      faultPrediction,
-      rul,
-      trends
-    );
+    const recommendation = buildRecommendation(anomaly, faultPrediction, rul, trends, aiDegraded);
 
     return {
       modelsLoaded: true,
+      aiDegraded,
       anomaly,
       faultPrediction,
       trends,
@@ -124,5 +177,13 @@ export function useAIInsight(
       explanation,
       recommendation
     };
-  }, [modelsLoaded, telemetry, history]);
+  }, [
+    modelsLoaded,
+    rulXgbLoaded,
+    xgbRul,
+    classifierXgbLoaded,
+    xgbFault,
+    telemetry,
+    history
+  ]);
 }

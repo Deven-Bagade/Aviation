@@ -32,6 +32,7 @@ export type Explanation = {
 
 export type AIInsight = {
   modelsLoaded: boolean;
+  aiDegraded: boolean; // models loaded, but produced invalid output for this reading
   anomaly: AnomalyResult | null;
   faultPrediction: FaultPrediction | null;
   trends: TrendPoint[];

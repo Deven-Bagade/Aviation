@@ -18,14 +18,34 @@ export default function AIInsightPanel({ insight }: Props) {
     );
   }
 
+  const hasFault = insight.faultPrediction && insight.faultPrediction.label !== "NONE";
+
+  const statusLabel = insight.aiDegraded
+    ? "AI DEGRADED"
+    : insight.anomaly?.isAnomalous || hasFault
+      ? "ANOMALY"
+      : "NOMINAL";
+
+  const statusClass = insight.aiDegraded
+    ? "health-pill warning"
+    : statusLabel === "ANOMALY"
+      ? "health-pill critical"
+      : "health-pill normal";
+
   return (
     <div className="panel ai-panel">
       <div className="panel-title">
         <span>AI / ML ANALYTICS</span>
-        <span className={insight.anomaly?.isAnomalous ? "health-pill critical" : "health-pill normal"}>
-          {insight.anomaly?.isAnomalous ? "ANOMALY" : "NOMINAL"}
-        </span>
+        <span className={statusClass}>{statusLabel}</span>
       </div>
+
+      {insight.aiDegraded && (
+        <div className="ai-degraded-warning">
+          AI model output was invalid for this reading — this is NOT a confirmation of
+          nominal operation. Trust the rule-based Engine Health panel until this clears;
+          check the browser console for details, the model likely needs retraining.
+        </div>
+      )}
 
       <div className="ai-grid">
         <div className="ai-card">
@@ -62,7 +82,7 @@ export default function AIInsightPanel({ insight }: Props) {
             </span>
           </div>
         ))}
-        {insight.trends.every((t) => t.direction === "STABLE") && (
+        {insight.trends.every((t) => t.direction === "STABLE") && !insight.aiDegraded && (
           <div className="all-good">All monitored parameters stable.</div>
         )}
       </div>

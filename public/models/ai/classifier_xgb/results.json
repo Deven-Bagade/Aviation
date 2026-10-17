@@ -1,0 +1,271 @@
+{
+  "algorithm": "xgboost",
+  "data_source": "uploaded:telemetry_train.json",
+  "n_train": 159967,
+  "n_val": 34279,
+  "n_test": 34279,
+  "hyperparameters": {
+    "objective": "multi:softprob",
+    "base_score": "None",
+    "booster": "None",
+    "callbacks": "None",
+    "colsample_bylevel": "None",
+    "colsample_bynode": "None",
+    "colsample_bytree": "None",
+    "device": "None",
+    "early_stopping_rounds": "None",
+    "enable_categorical": "True",
+    "eval_metric": "mlogloss",
+    "feature_types": "None",
+    "feature_weights": "None",
+    "gamma": "None",
+    "grow_policy": "None",
+    "importance_type": "None",
+    "interaction_constraints": "None",
+    "learning_rate": "0.1",
+    "max_bin": "None",
+    "max_cat_threshold": "None",
+    "max_cat_to_onehot": "None",
+    "max_delta_step": "None",
+    "max_depth": "6",
+    "max_leaves": "None",
+    "min_child_weight": "None",
+    "missing": "nan",
+    "monotone_constraints": "None",
+    "multi_strategy": "None",
+    "n_estimators": "300",
+    "n_jobs": "-1",
+    "num_parallel_tree": "None",
+    "random_state": "42",
+    "reg_alpha": "None",
+    "reg_lambda": "None",
+    "sampling_method": "None",
+    "scale_pos_weight": "None",
+    "subsample": "None",
+    "tree_method": "None",
+    "validate_parameters": "None",
+    "verbosity": "None",
+    "num_class": "10"
+  },
+  "metrics": {
+    "accuracy": 0.9836926398086292,
+    "macro_f1": 0.9833899702148209,
+    "weighted_f1": 0.9835113919328767,
+    "macro_roc_auc": 0.9992203834374367,
+    "per_class_auc": {
+      "NONE": 0.9980600243088861,
+      "HIGH_TEMP": 1.0,
+      "LOW_OIL": 1.0,
+      "HIGH_VIBRATION": 1.0,
+      "ELECTRICAL": 1.0,
+      "FUEL_SYSTEM": 1.0,
+      "ABNORMAL_RPM": 0.9967668713793871,
+      "COOLING_FAULT": 1.0,
+      "INJECTOR_FAULT": 1.0,
+      "SENSOR_FAULT": 0.997376938686094
+    },
+    "per_class_report": {
+      "NONE": {
+        "precision": 0.9625659202904815,
+        "recall": 0.9893371245779279,
+        "f1-score": 0.975767933044126,
+        "support": 11254.0
+      },
+      "HIGH_TEMP": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2618.0
+      },
+      "LOW_OIL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1981.0
+      },
+      "HIGH_VIBRATION": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2425.0
+      },
+      "ELECTRICAL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2879.0
+      },
+      "FUEL_SYSTEM": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2468.0
+      },
+      "ABNORMAL_RPM": {
+        "precision": 0.929326287978864,
+        "recall": 0.8574040219378428,
+        "f1-score": 0.8919175911251981,
+        "support": 1641.0
+      },
+      "COOLING_FAULT": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2464.0
+      },
+      "INJECTOR_FAULT": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 3141.0
+      },
+      "SENSOR_FAULT": {
+        "precision": 0.9941030415890751,
+        "recall": 0.9398474178403756,
+        "f1-score": 0.9662141779788839,
+        "support": 3408.0
+      },
+      "accuracy": 0.9836926398086292,
+      "macro avg": {
+        "precision": 0.9885995249858419,
+        "recall": 0.9786588564356148,
+        "f1-score": 0.9833899702148209,
+        "support": 34279.0
+      },
+      "weighted avg": {
+        "precision": 0.983740612948393,
+        "recall": 0.9836926398086292,
+        "f1-score": 0.9835113919328767,
+        "support": 34279.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        11134,
+        0,
+        0,
+        0,
+        0,
+        0,
+        101,
+        0,
+        0,
+        19
+      ],
+      [
+        0,
+        2618,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1981,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        2425,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        2879,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2468,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        234,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1407,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2464,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3141,
+        0
+      ],
+      [
+        199,
+        0,
+        0,
+        0,
+        0,
+        0,
+        6,
+        0,
+        0,
+        3203
+      ]
+    ],
+    "cv_f1_mean": 0.9811222296373835,
+    "cv_f1_std": 0.00011662165536702745,
+    "train_time_sec": 43.066343545913696,
+    "inference_latency_ms": 0.9856116771697998,
+    "model_size_kb": 4205.029296875,
+    "validation_accuracy": 0.982029814171942
+  }
+}

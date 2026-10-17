@@ -1,0 +1,25 @@
+{
+  "features": [
+    "rpm",
+    "cht",
+    "egt",
+    "oilPressure",
+    "oilTemperature",
+    "fuelFlow",
+    "vibration",
+    "batteryVoltage",
+    "alternatorCurrent",
+    "throttle",
+    "chtResidual",
+    "egtResidual",
+    "oilPressureResidual",
+    "oilTemperatureResidual",
+    "vibrationResidual",
+    "fuelFlowResidual",
+    "degradation"
+  ],
+  "input_name": "input",
+  "output_name": "variable",
+  "output_unit": "hours",
+  "note": "degradation scaling (raw 0-100 vs /100) was not confirmed from the training script - validate against a known sample before trusting predictions, see rulXgb.ts comment."
+}

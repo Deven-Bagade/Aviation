@@ -21,6 +21,7 @@
     "@tensorflow/tfjs": "^4.22.0",
     "@vitejs/plugin-react": "^5.0.0",
     "firebase": "^12.18.0",
+    "onnxruntime-web": "^1.29.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "recharts": "^3.10.1",

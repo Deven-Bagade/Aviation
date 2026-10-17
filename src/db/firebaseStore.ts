@@ -4,6 +4,7 @@ import {
 
 import {
   getFirestore,
+  initializeFirestore,
   collection,
   doc,
   setDoc,
@@ -91,8 +92,9 @@ function getFirestoreInstance(): ReturnType<typeof getFirestore> {
   }
 
   firebaseApp = initializeApp(firebaseConfig);
-  firestore = getFirestore(firebaseApp);
-
+  firestore = initializeFirestore(firebaseApp, {
+    ignoreUndefinedProperties: true
+  });
   return firestore;
 }
 

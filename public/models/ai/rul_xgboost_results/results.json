@@ -1,0 +1,41 @@
+{
+  "task": "rul_estimator",
+  "algorithm": "xgboost",
+  "data_source": "uploaded:telemetry_train.json",
+  "n_train": 159967,
+  "n_val": 34279,
+  "n_test": 34279,
+  "metrics": {
+    "test_rmse_hours": 0.5635445496562863,
+    "test_mae_hours": 0.025339332025358405,
+    "test_r2": 0.9877170613233325,
+    "test_mape_pct_rul_over_50h": 1.4829830204730783,
+    "validation_rmse_hours": 0.5386157546103274,
+    "baseline_rmse_hours": {
+      "mean_predictor": 5.084837996899323,
+      "degradation_only_linear": 4.3287124803032
+    },
+    "mae_by_degradation_stage": {
+      "0-25% (early)": 0.8524740919511913,
+      "25-50% (mid)": 0.3619902871864178,
+      "50-75% (late)": 0.18599215872616479,
+      "75-100% (critical)": 0.001894707107770974
+    },
+    "mae_nominal_rows": 0.05638248386501808,
+    "mae_faulty_rows": 0.01001120088124198,
+    "top_feature_importance": {
+      "oilPressure": 0.30613797903060913,
+      "degradation": 0.26882249116897583,
+      "vibrationResidual": 0.24339695274829865,
+      "cht": 0.08668156713247299,
+      "batteryVoltage": 0.038319166749715805,
+      "oilTemperatureResidual": 0.019186535850167274,
+      "egt": 0.008520997129380703,
+      "chtResidual": 0.007956855930387974
+    },
+    "train_time_sec": 10.165660619735718,
+    "inference_latency_ms": 0.513085126876831,
+    "model_size_kb": 1272.9150390625
+  },
+  "deployable_unchanged": false
+}

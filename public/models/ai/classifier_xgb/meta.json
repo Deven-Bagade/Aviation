@@ -1,0 +1,36 @@
+{
+  "labels": [
+    "NONE",
+    "HIGH_TEMP",
+    "LOW_OIL",
+    "HIGH_VIBRATION",
+    "ELECTRICAL",
+    "FUEL_SYSTEM",
+    "ABNORMAL_RPM",
+    "COOLING_FAULT",
+    "INJECTOR_FAULT",
+    "SENSOR_FAULT"
+  ],
+  "features": [
+    "rpm",
+    "cht",
+    "egt",
+    "oilPressure",
+    "oilTemperature",
+    "fuelFlow",
+    "vibration",
+    "batteryVoltage",
+    "alternatorCurrent",
+    "throttle",
+    "chtResidual",
+    "egtResidual",
+    "oilPressureResidual",
+    "oilTemperatureResidual",
+    "vibrationResidual",
+    "fuelFlowResidual"
+  ],
+  "input_name": "input",
+  "label_output_name": "label",
+  "probability_output_name": "probabilities",
+  "note": "Converted from xgboost_results/model.pkl (XGBClassifier, multi:softprob, num_class=10). Verified against model.predict_proba() before writing (see script output above)."
+}

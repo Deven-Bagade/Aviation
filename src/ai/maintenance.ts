@@ -4,8 +4,13 @@ export function buildRecommendation(
   anomaly: AnomalyResult | null,
   faultPrediction: FaultPrediction | null,
   rul: RulEstimate | null,
-  trends: TrendPoint[]
+  trends: TrendPoint[],
+  aiDegraded: boolean = false
 ): string {
+  if (aiDegraded) {
+    return "AI analytics unavailable for this reading (model output was invalid) — this is NOT a nominal result. Rely on the rule-based Engine Health status until this is resolved.";
+  }
+
   if (!anomaly && !faultPrediction) {
     return "AI models not loaded — showing rule-based analytics only.";
   }

@@ -3,6 +3,7 @@ import React, {
   Component,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from "react";
 import type {
@@ -60,6 +61,20 @@ import SimulationControlPanel
 import { useAIInsight }
   from "./ai/useAIInsight";
 
+import FleetView
+  from "./components/FleetView";
+
+import {
+  FleetAirframeSummary,
+  upsertFleetSummary,
+  getFleetRoster,
+  addToFleetRoster,
+  subscribeFleetSummaries
+} from "./db/fleetStore";
+
+import { useAuth }
+  from "./auth/AuthContext";
+
 // @ts-expect-error CSS side-effect import
 import "./styles.css";
 
@@ -73,7 +88,8 @@ type AppTab =
   | "mission"
   | "replay"
   | "history"
-  | "maps";
+  | "maps"
+  | "fleet";
 
 type DashboardView =
   | "overview"
@@ -279,17 +295,38 @@ export default function App() {
     setConnected
   ] = useState(true);
 
-
   const [
     recording,
     setRecording
   ] = useState(false);
 
 
+  const { user, logout, can } = useAuth();
+
+
+  const [tailNumber, setTailNumber] = useState("UAV-01");
+  const [roster, setRoster] = useState<string[]>(() => getFleetRoster());
+  const [addingTail, setAddingTail] = useState(false);
+  const [newTailInput, setNewTailInput] = useState("");
+
+  useEffect(() => {
+    const refreshRoster = () => setRoster(getFleetRoster());
+    return subscribeFleetSummaries(refreshRoster);
+  }, []);
+
+  const handleAddTail = () => {
+    const trimmed = newTailInput.trim().toUpperCase();
+    if (!trimmed) return;
+    addToFleetRoster(trimmed);
+    setTailNumber(trimmed);
+    setNewTailInput("");
+    setAddingTail(false);
+  };
+
+
   /* ==========================================================
    * TELEMETRY
    * ======================================================== */
-
   useEffect(() => {
 
     telemetryEngine.start();
@@ -648,10 +685,44 @@ export default function App() {
     );
 
 
+  const fleetSnapshotRef = useRef({ telemetry, healthStatus, aiInsight });
+  fleetSnapshotRef.current = { telemetry, healthStatus, aiInsight };
+
+  useEffect(() => {
+    const pushFleetSummary = () => {
+      const snap = fleetSnapshotRef.current;
+
+      const score =
+        snap.healthStatus.label === "HEALTHY" ? 98 :
+        snap.healthStatus.label === "WARNING" ? 72 : 38;
+
+      const healthState: FleetAirframeSummary["healthState"] =
+        snap.healthStatus.label === "HEALTHY" ? "NORMAL" :
+        snap.healthStatus.label === "WARNING" ? "WARNING" : "CRITICAL";
+
+      upsertFleetSummary({
+        tailNumber,
+        updatedAt: Date.now(),
+        engineState: snap.telemetry.engineState,
+        mode: snap.telemetry.mode,
+        ehi: score,
+        healthState,
+        rulHours: snap.aiInsight.rul?.blendedHours ?? 0,
+        degradationPct: 100 - score,
+        activeFault: snap.telemetry.fault,
+        missionId: missionState.missionId ?? null
+      });
+    };
+
+    pushFleetSummary();
+    const interval = setInterval(pushFleetSummary, 3000);
+    return () => clearInterval(interval);
+  }, [tailNumber, missionState.missionId]);
+
+
   /* ==========================================================
    * NAVIGATION
    * ======================================================== */
-
   const navigate = (
     tab: AppTab
   ) => {
@@ -695,6 +766,18 @@ export default function App() {
 
 
         <div className="header-status">
+
+          <div className="tail-selector">
+            <span>Airframe:</span>
+            <select
+              value={tailNumber}
+              onChange={(e) => setTailNumber(e.target.value)}
+            >
+              <option value="UAV-01">UAV-01</option>
+              <option value="UAV-02">UAV-02</option>
+              <option value="UAV-03">UAV-03</option>
+            </select>
+          </div>
 
           <div
             className={
@@ -809,6 +892,21 @@ export default function App() {
         >
           <span>05</span>
           Performance Maps
+        </button>
+
+
+        <button
+          className={
+            activeTab === "fleet"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            navigate("fleet")
+          }
+        >
+          <span>06</span>
+          Fleet
         </button>
 
       </nav>
@@ -1410,30 +1508,34 @@ export default function App() {
 
                   <div className="control-actions">
 
-                    <button
-                      className="warning-button"
-                      onClick={() =>
-                        injectFault(
-                          "HIGH_TEMP"
-                        )
-                      }
-                    >
-                      INJECT FAULT
-                    </button>
+                    {can("ADMIN") && (
+                      <button
+                        className="warning-button"
+                        onClick={() =>
+                          injectFault(
+                            "HIGH_TEMP"
+                          )
+                        }
+                      >
+                        INJECT FAULT
+                      </button>
+                    )}
 
 
-                    <button
-                      className="secondary-button"
-                      onClick={
-                        clearFault
-                      }
-                      disabled={
-                        telemetry.fault ===
-                        null
-                      }
-                    >
-                      CLEAR
-                    </button>
+                    {can("ADMIN") && (
+                      <button
+                        className="secondary-button"
+                        onClick={
+                          clearFault
+                        }
+                        disabled={
+                          telemetry.fault ===
+                          null
+                        }
+                      >
+                        CLEAR
+                      </button>
+                    )}
 
 
                     <button
@@ -1782,7 +1884,16 @@ export default function App() {
              * SIMULATION VIEW
              * ================================================= */}
 
-            {dashboardView === "simulation" && (
+            {dashboardView === "simulation" && !can("ADMIN") && (
+              <div className="simulation-workspace">
+                <div className="locked-notice">
+                  Manual overrides and simulation controls are restricted to Admin accounts.
+                  Sign in as an Admin to access this view.
+                </div>
+              </div>
+            )}
+
+            {dashboardView === "simulation" && can("ADMIN") && (
 
               <div className="simulation-workspace">
 
@@ -1857,6 +1968,11 @@ export default function App() {
 
         {activeTab === "maps" && (
           <PerformanceMapsPanel />
+        )}
+
+
+        {activeTab === "fleet" && (
+          <FleetView />
         )}
 
       </main>
